@@ -1063,6 +1063,8 @@ class BillsControllerTest < ActionDispatch::IntegrationTest
     assert_match I18n.t("bills.index.review_with_ai"), response.body
     assert_no_match I18n.t("bills.month_pulse.left_to_pay"), response.body
     assert_no_match "due before my next paycheck", response.body
+    assert_no_match I18n.t("bills.ai_prompts.subscriptions_up"), response.body
+    assert_no_match I18n.t("bills.ai_prompts.monthly_subscriptions"), response.body
 
     # A suggestion isn't a bill yet, so it doesn't bring them back.
     create_suggested(name: "Riverside Climbing Gym", account: accounts(:depository))
@@ -1071,6 +1073,8 @@ class BillsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Riverside Climbing Gym", response.body
     assert_no_match I18n.t("bills.month_pulse.left_to_pay"), response.body
     assert_no_match "due before my next paycheck", response.body
+    assert_no_match I18n.t("bills.ai_prompts.subscriptions_up"), response.body
+    assert_no_match I18n.t("bills.ai_prompts.monthly_subscriptions"), response.body
   end
 
   # A cancellation date does not stop the schedule, so the same bill can read
