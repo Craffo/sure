@@ -56,6 +56,16 @@ class EnableBankingItem::ImporterErrorHandlingTest < ActiveSupport::TestCase
     assert_not @enable_banking_item.reload.requires_update?
   end
 
+  test "bank access limits explain the delay and preserve valid consent" do
+    error = Provider::EnableBanking::EnableBankingError.new("Rate limited", :rate_limited,
+      response_data: { error: "ASPSP_RATE_LIMIT_EXCEEDED" })
+    assert_difference "DebugLogEntry.count", 1 do
+      assert_equal I18n.t("enable_banking_items.errors.bank_rate_limited"), @importer.send(:handle_sync_error, error)
+    end
+    assert @enable_banking_item.reload.good?
+    assert_equal true, DebugLogEntry.last.metadata["bank_limit"]
+  end
+
   test "handle_sync_error handles other EnableBankingError as api_error" do
     error = Provider::EnableBanking::EnableBankingError.new("Some API error", :internal_server_error)
     message = @importer.send(:handle_sync_error, error)

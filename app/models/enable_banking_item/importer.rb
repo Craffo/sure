@@ -169,6 +169,24 @@ class EnableBankingItem::Importer
 
       provider_error = exceptions.find { |ex| ex.is_a?(Provider::EnableBanking::EnableBankingError) }
 
+      if provider_error&.error_type == :rate_limited
+        data = provider_error.response_data
+        bank_limit = data.is_a?(Hash) && data[:error] == "ASPSP_RATE_LIMIT_EXCEEDED"
+        DebugLogEntry.capture(
+          category: "provider_sync_error", level: "warn",
+          message: "Enable Banking request limit reached",
+          source: self.class.name, provider_key: "enable_banking",
+          family: enable_banking_item.family,
+          metadata: {
+            error_type: "rate_limited",
+            bank_limit: bank_limit,
+            user_context_sent: enable_banking_item.build_psu_headers.present?
+          }
+        )
+        key = bank_limit ? "bank_rate_limited" : "rate_limited"
+        return I18n.t("enable_banking_items.errors.#{key}")
+      end
+
       # Handle session expiration status update (session-level failures only)
       if session_level && provider_error && [ :unauthorized, :not_found ].include?(provider_error.error_type)
         enable_banking_item.update!(status: :requires_update)

@@ -15,6 +15,16 @@ class EnableBankingItemsControllerTest < ActionDispatch::IntegrationTest
     )
   end
 
+  test "manual bank sync queues the current browser context" do
+    assert_enqueued_with(job: SyncJob, args: ->(args) {
+      context = args.last[:enable_banking_psu_context]
+      context["family_id"] == @family.id && context.dig("headers", "Psu-User-Agent") == "Sure test browser"
+    }) do
+      post sync_enable_banking_item_url(@item), headers: { "HTTP_USER_AGENT" => "Sure test browser" }
+    end
+    assert_redirected_to accounts_path
+  end
+
   test "select_bank exposes ASPSP BIC in the searchable data attribute" do
     Provider::EnableBanking.any_instance.stubs(:get_aspsps).returns(
       aspsps: [

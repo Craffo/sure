@@ -8,6 +8,17 @@ class Provider::EnableBankingTest < ActiveSupport::TestCase
     @provider = Provider::EnableBanking.new(application_id: "test_app_id", client_certificate: key.to_pem)
   end
 
+  test "rate limits preserve the bank error without retrying the request" do
+    response = OpenStruct.new(code: 429, body: { error: "ASPSP_RATE_LIMIT_EXCEEDED", message: "Daily limit" }.to_json)
+    Provider::EnableBanking.expects(:get).once.returns(response)
+
+    error = assert_raises(Provider::EnableBanking::EnableBankingError) do
+      @provider.get_account_transactions(account_id: "test-account", date_from: Date.current)
+    end
+    assert_equal :rate_limited, error.error_type
+    assert_equal "ASPSP_RATE_LIMIT_EXCEEDED", error.response_data[:error]
+  end
+
   test "get_account_transactions retries with corrected date_from from WRONG_TRANSACTIONS_PERIOD" do
     requested_queries = []
 

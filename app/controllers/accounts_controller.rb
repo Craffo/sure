@@ -1,5 +1,8 @@
 class AccountsController < ApplicationController
   include StreamExtensions
+  include EnableBankingUserContext
+
+  around_action :with_enable_banking_user_context, only: %i[sync sync_all]
 
   before_action :set_account, only: %i[show sparkline sync set_default remove_default]
   before_action :set_manageable_account, only: %i[toggle_active toggle_exclude_from_reports destroy unlink confirm_unlink select_provider]

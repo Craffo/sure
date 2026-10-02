@@ -189,6 +189,17 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_empty response.body.scan(/translation missing: [\w.]+/).uniq
   end
 
+  test "sync all carries browser context into the family job" do
+    Family.any_instance.stubs(:request_plaid_transactions_refreshes_later)
+    assert_enqueued_with(job: SyncJob, args: ->(args) {
+      context = args.last[:enable_banking_psu_context]
+      context["family_id"] == @user.family_id && context.dig("headers", "Psu-User-Agent") == "Manual browser"
+    }) do
+      post sync_all_accounts_url, headers: { "HTTP_USER_AGENT" => "Manual browser" }
+    end
+    assert_redirected_to accounts_url
+  end
+
   test "sync all requests fresh Plaid transactions before syncing the family" do
     sequence = sequence("manual sync all")
     Family.any_instance

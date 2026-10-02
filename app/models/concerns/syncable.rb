@@ -70,7 +70,14 @@ module Syncable
             window_end_date: window_end_date
           )
 
-          SyncJob.perform_later(sync)
+          # Carry a manual request through the family -> bank job chain only.
+          # Scheduled syncs have no context and retain the existing job contract.
+          context = Current.enable_banking_psu_context if is_a?(Family) || is_a?(EnableBankingItem)
+          if context.present?
+            SyncJob.perform_later(sync, enable_banking_psu_context: context)
+          else
+            SyncJob.perform_later(sync)
+          end
         end
 
         sync

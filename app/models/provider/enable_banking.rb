@@ -348,7 +348,8 @@ class Provider::EnableBanking
         response_data = parse_response_body(response)
         raise EnableBankingError.new("Validation error from Enable Banking API: #{response.body}", :validation_error, response_data: response_data)
       when 429
-        raise EnableBankingError.new("Rate limit exceeded. Please try again later.", :rate_limited)
+        response_data = parse_error_response_body(response)
+        raise EnableBankingError.new("Rate limit exceeded. Please try again later.", :rate_limited, response_data: response_data)
       else
         response_data = parse_error_response_body(response)
         raise EnableBankingError.new("Failed to fetch data: #{response.code} #{response.message} - #{response.body}", :fetch_failed, response_data: response_data)

@@ -3,6 +3,8 @@ it:
   enable_banking_items:
     errors:
       api_error: "Si è verificato un errore di comunicazione con la banca."
+      bank_rate_limited: "La banca ha raggiunto il limite di accessi. Il collegamento è ancora valido. Riprova più tardi: la banca non ha indicato l'orario di sblocco."
+      rate_limited: "Il servizio bancario sta limitando temporaneamente le richieste. Riprova più tardi."
       network_unreachable: "Il servizio bancario è temporaneamente irraggiungibile. Riprova più tardi."
       session_invalid: "Sessione scaduta. Riconnetti la tua banca."
       unexpected: "Si è verificato un errore imprevisto durante la sincronizzazione."
