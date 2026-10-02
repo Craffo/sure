@@ -19,6 +19,7 @@
       data-preview-sankey-chart-data-value="<%= cashflow_overview_chart_data(sankey_data).to_json %>"
       data-preview-sankey-chart-labels-value="<%= t("pages.dashboard.cashflow_overview.node_labels").to_json %>"
       data-preview-sankey-chart-currency-value="<%= Current.family.currency %>"
+      data-preview-sankey-chart-locale-value="<%= I18n.locale %>"
       data-preview-sankey-chart-node-padding-value="36"
       data-preview-sankey-chart-zoom-enabled-value="false"
       data-preview-sankey-chart-start-date-value="<%= period.start_date&.iso8601 %>"

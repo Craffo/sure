@@ -22,6 +22,7 @@ export default class extends Controller {
     nodeWidth: { type: Number, default: 15 },
     nodePadding: { type: Number, default: 20 },
     currency: { type: String, default: "USD" },
+    locale: String,
     zoomEnabled: { type: Boolean, default: true },
     startDate: String,
     endDate: String,
@@ -623,7 +624,7 @@ export default class extends Controller {
     return formatCashFlowCurrency(
       value,
       this.currencyValue,
-      document.documentElement.lang || undefined,
+      this.localeValue || document.documentElement.lang || undefined,
     );
   }
 }
