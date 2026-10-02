@@ -1,0 +1,18 @@
+en:
+  pages:
+    dashboard:
+      cashflow_overview:
+        income: Income
+        spending: Spending
+        difference: Difference
+        other_income: Other income
+        other_expense: Other spending
+        description: "Main categories only. Smaller amounts are grouped; all categories remain available below. Refunds are netted within each category."
+        deficit_explanation: "Spending exceeds recorded income by %{amount} for the selected period. The difference is shown separately; it is not additional income."
+        details: All categories and subcategories
+        category: Category
+        amount: Amount
+        node_labels:
+          cash_flow: Total allocated
+          deficit: Spending above income
+          surplus: Unspent income

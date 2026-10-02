@@ -1,24 +1,51 @@
 <%# locals: (sankey_data:, period:) %>
-<div
-  data-controller="sankey-chart"
-  data-sankey-chart-data-value="<%= sankey_data.to_json %>"
-  data-sankey-chart-currency-symbol-value="<%= sankey_data[:currency_symbol] %>"
-  data-sankey-chart-start-date-value="<%= period.start_date&.iso8601 %>"
-  data-sankey-chart-end-date-value="<%= period.end_date&.iso8601 %>"
-  class="w-full h-full privacy-sensitive flex flex-col gap-2">
-  <div class="flex justify-start px-4">
-    <%= render DS::Button.new(
-      variant: :icon,
-      icon: "arrow-left",
-      type: "button",
-      title: t("pages.dashboard.cashflow_sankey.zoom_out"),
-      aria: { label: t("pages.dashboard.cashflow_sankey.zoom_out") },
-      hidden: true,
-      data: {
-        sankey_chart_target: "zoomOutButton",
-        action: "sankey-chart#zoomOut"
-      }
-    ) %>
+<div class="space-y-4 privacy-sensitive">
+  <dl class="grid grid-cols-1 sm:grid-cols-3 gap-3 px-4">
+    <% { income: :income, spending: :spending, difference: :net_savings }.each do |label, key| %>
+      <div class="rounded-xl bg-surface p-3">
+        <dt class="text-sm text-secondary"><%= t("pages.dashboard.cashflow_overview.#{label}") %></dt>
+        <dd class="text-lg font-medium text-primary tabular-nums"><%= format_money(Money.new(sankey_data.fetch(key).to_d, Current.family.currency)) %></dd>
+      </div>
+    <% end %>
+  </dl>
+  <p class="text-sm text-secondary px-4"><%= t("pages.dashboard.cashflow_overview.description") %></p>
+  <% if sankey_data[:net_savings].to_d.negative? %>
+    <p class="text-sm text-warning px-4"><%= t("pages.dashboard.cashflow_overview.deficit_explanation", amount: format_money(Money.new(-sankey_data[:net_savings].to_d, Current.family.currency))) %></p>
+  <% end %>
+  <div class="overflow-x-auto" tabindex="0" role="region" aria-label="<%= t("pages.dashboard.cashflow_sankey.title") %>">
+    <div
+      data-controller="preview-sankey-chart"
+      data-action="turbo:before-cache@document->preview-sankey-chart#clear"
+      data-preview-sankey-chart-data-value="<%= cashflow_overview_chart_data(sankey_data).to_json %>"
+      data-preview-sankey-chart-labels-value="<%= t("pages.dashboard.cashflow_overview.node_labels").to_json %>"
+      data-preview-sankey-chart-currency-value="<%= Current.family.currency %>"
+      data-preview-sankey-chart-node-padding-value="36"
+      data-preview-sankey-chart-zoom-enabled-value="false"
+      data-preview-sankey-chart-start-date-value="<%= period.start_date&.iso8601 %>"
+      data-preview-sankey-chart-end-date-value="<%= period.end_date&.iso8601 %>"
+      class="w-full min-w-160 h-128">
+      <div data-preview-sankey-chart-target="chart" class="h-full"></div>
+    </div>
   </div>
-  <div data-sankey-chart-target="chart" class="min-h-0 flex-1"></div>
+  <div class="px-4">
+    <%= render DS::Disclosure.new(title: t("pages.dashboard.cashflow_overview.details"), align: :left) do %>
+      <% %w[income expense].each do |side| %>
+        <h3 class="text-sm font-medium text-primary py-3"><%= t("pages.dashboard.cashflow_overview.#{side == "income" ? "income" : "spending"}") %></h3>
+        <%= render DS::Table.new(rows: cashflow_overview_detail_rows(sankey_data, side), inset: true, label: t("pages.dashboard.cashflow_overview.details")) do |table| %>
+          <% table.with_column(t("pages.dashboard.cashflow_overview.category")) do |node| %>
+            <div class="<%= node[:sub] ? "pl-4 text-secondary" : "font-medium text-primary" %>">
+              <% if node[:filter_value].present? %>
+                <%= link_to node[:name], cashflow_overview_category_path(node, period), class: "hover:underline" %>
+              <% else %>
+                <%= node[:name] %>
+              <% end %>
+            </div>
+          <% end %>
+          <% table.with_column(t("pages.dashboard.cashflow_overview.amount"), numeric: true) do |node| %>
+            <%= format_money(Money.new(node[:value].to_d, Current.family.currency)) %>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
 </div>

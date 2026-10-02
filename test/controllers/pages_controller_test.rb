@@ -108,7 +108,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
-  test "dashboard renders sankey chart with subcategories" do
+  test "dashboard renders a bounded sankey with subcategories in expandable details" do
     # Create parent category with subcategory
     parent_category = @family.categories.create!(name: "Shopping", color: "#FF5733")
     subcategory = @family.categories.create!(name: "Groceries", parent: parent_category, color: "#33FF57")
@@ -119,10 +119,12 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
 
     get root_path
     assert_response :ok
-    assert_select "[data-controller='sankey-chart']"
+    assert_select "#cashflow-sankey-chart [data-controller='preview-sankey-chart']"
+    assert_select "#cashflow-sankey-chart details a", text: "Groceries"
+    assert_select "#cashflow-sankey-chart dl dt", text: "Difference"
   end
 
-  test "dashboard renders sankey chart zoom controls and stable node ids" do
+  test "dashboard overview disables zoom and retains stable category identifiers" do
     parent_category = @family.categories.create!(name: "Shopping", color: "#FF5733")
     subcategory = @family.categories.create!(name: "Groceries", parent: parent_category, color: "#33FF57")
 
@@ -132,34 +134,35 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :ok
-    assert_select "[data-sankey-chart-target='zoomOutButton'][hidden]", count: 2
+    assert_select "#cashflow-sankey-chart [data-preview-sankey-chart-zoom-enabled-value='false']", count: 2
 
-    chart = css_select("[data-controller='sankey-chart']").first
-    sankey_data = JSON.parse(chart["data-sankey-chart-data-value"])
+    chart = css_select("#cashflow-sankey-chart [data-controller='preview-sankey-chart']").first
+    sankey_data = JSON.parse(chart["data-preview-sankey-chart-data-value"])
 
     assert_includes sankey_data.fetch("nodes").map { |node| node.fetch("id") }, "cash_flow_node"
     assert sankey_data.fetch("nodes").any? { |node| node.fetch("id").start_with?("expense_") }
   end
 
-  test "dashboard sankey nodes carry a stable filter_value, including opposite-direction subcategories" do
+  test "dashboard overview preserves filter values and refunded subcategory detail links" do
     parent_category = @family.categories.create!(name: "Shopping", color: "#FF5733")
     subcategory = @family.categories.create!(name: "Rebate Program", parent: parent_category, color: "#33FF57")
 
-    # Parent nets as an expense; the subcategory nets as income (more refunded than spent),
-    # which routes it into the "opposite_subs" branch as its own standalone node.
+    # Opposite-direction children stay on the income side, with detail links
+    # available below the overview instead of adding another graph column.
     create_transaction(account: @family.accounts.first, name: "Shopping trip", amount: 100, category: parent_category)
     create_transaction(account: @family.accounts.first, name: "Rebate refund", amount: -30, category: subcategory)
 
     get root_path
     assert_response :ok
 
-    chart = css_select("[data-controller='sankey-chart']").first
-    sankey_data = JSON.parse(chart["data-sankey-chart-data-value"])
+    chart = css_select("#cashflow-sankey-chart [data-controller='preview-sankey-chart']").first
+    sankey_data = JSON.parse(chart["data-preview-sankey-chart-data-value"])
     nodes = sankey_data.fetch("nodes")
 
-    opposite_node = nodes.find { |node| node.fetch("id").start_with?("income_sub_") }
-    assert_not_nil opposite_node, "expected an opposite-direction subcategory node"
-    assert_equal subcategory.name, opposite_node["filter_value"]
+    assert nodes.none? { |node| node.fetch("id").start_with?("income_sub_") }
+    detail_link = css_select("#cashflow-sankey-chart details a").find { |link| link.text == subcategory.name }
+    assert_not_nil detail_link
+    assert_equal [ subcategory.name ], Rack::Utils.parse_nested_query(URI.parse(detail_link["href"]).query).dig("q", "categories")
 
     parent_node = nodes.find { |node| node.fetch("id") == "expense_#{parent_category.id}" }
     assert_equal parent_category.name, parent_node["filter_value"]

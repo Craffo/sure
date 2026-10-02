@@ -1,0 +1,18 @@
+it:
+  pages:
+    dashboard:
+      cashflow_overview:
+        income: Entrate
+        spending: Uscite
+        difference: Differenza
+        other_income: Altre entrate
+        other_expense: Altre spese
+        description: "Solo categorie principali. Le voci minori sono raggruppate; trovi tutte le categorie qui sotto. I rimborsi sono sottratti nella rispettiva categoria."
+        deficit_explanation: "Nel periodo selezionato le uscite superano le entrate registrate di %{amount}. La differenza è mostrata separatamente e non è un'entrata aggiuntiva."
+        details: Tutte le categorie e sottocategorie
+        category: Categoria
+        amount: Importo
+        node_labels:
+          cash_flow: Totale distribuito
+          deficit: Spese oltre le entrate
+          surplus: Entrate non spese

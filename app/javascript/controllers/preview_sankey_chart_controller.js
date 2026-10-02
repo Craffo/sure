@@ -22,6 +22,7 @@ export default class extends Controller {
     nodeWidth: { type: Number, default: 15 },
     nodePadding: { type: Number, default: 20 },
     currency: { type: String, default: "USD" },
+    zoomEnabled: { type: Boolean, default: true },
     startDate: String,
     endDate: String,
   };
@@ -193,7 +194,11 @@ export default class extends Controller {
   }
 
   #nodeAction(node) {
-    if (sankeyNodeHasChildren(this.#visibleData(), node.id)) return "button";
+    if (
+      this.zoomEnabledValue &&
+      sankeyNodeHasChildren(this.#visibleData(), node.id)
+    )
+      return "button";
     if (isNavigableCategoryNode(node.id) && node.filter_value) return "link";
     return null;
   }
@@ -615,6 +620,10 @@ export default class extends Controller {
   }
 
   #formatCurrency(value) {
-    return formatCashFlowCurrency(value, this.currencyValue);
+    return formatCashFlowCurrency(
+      value,
+      this.currencyValue,
+      document.documentElement.lang || undefined,
+    );
   }
 }

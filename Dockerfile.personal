@@ -1,0 +1,10 @@
+# Keep dependencies identical to the installed upstream release. Rebuild the
+# frontend after copying the fork's tracked application files.
+FROM ghcr.io/we-promise/sure@sha256:3692b3bcf0eae2c7f3154348c6131060bda8127038fc78b0543f15b5166e6074
+ARG FORK_REVISION=working-tree
+LABEL org.opencontainers.image.source="https://github.com/Craffo/sure" \
+      org.opencontainers.image.revision=$FORK_REVISION \
+      org.opencontainers.image.ref.name="personal/cashflow-overview"
+COPY --chown=rails:rails app /rails/app
+COPY --chown=rails:rails config/locales /rails/config/locales
+RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile

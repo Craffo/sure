@@ -50,7 +50,10 @@ class PagesController < ApplicationController
     expense_totals = income_statement.expense_totals(period: @period)
     net_totals = income_statement.net_category_totals(period: @period)
 
-    @cashflow_sankey_data = build_cashflow_sankey_data(net_totals, income_totals, expense_totals, family_currency)
+    @cashflow_sankey_data = IncomeStatement::SankeyOverview.new(
+      IncomeStatement::Sankey.new(income_statement, period: @period).as_json
+    ).as_json
+    @cashflow_legacy_data = build_cashflow_sankey_data(net_totals, income_totals, expense_totals, family_currency) if preview_features_enabled?
     @outflows_data = build_outflows_donut_data(net_totals)
     # Preview-gated: skip the query outright rather than loading rows the
     # section won't be built from.
