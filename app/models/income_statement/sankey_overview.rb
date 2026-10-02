@@ -27,8 +27,10 @@ class IncomeStatement::SankeyOverview
       end.sort_by { |node| [ -node[:value].to_d, node[:id] ] }
 
       details.concat(roots.map { |root| detail(root, side) })
-      visible = roots.first(limit).map(&:dup)
-      remainder = roots.drop(limit)
+      financing, categories = roots.partition { |node| node[:financing] }
+      category_limit = [ limit - financing.size, 0 ].max
+      visible = (financing + categories.first(category_limit)).map(&:dup)
+      remainder = categories.drop(category_limit)
       if remainder.any?
         value = remainder.sum { |node| node[:value].to_d }
         total = roots.sum { |node| node[:value].to_d }

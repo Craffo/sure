@@ -8,6 +8,9 @@
       </div>
     <% end %>
   </dl>
+  <% if sankey_data[:financing_income].to_d.positive? %>
+    <p class="text-sm text-primary px-4"><%= t("pages.dashboard.cashflow_overview.financing_included", amount: format_money(Money.new(sankey_data[:financing_income].to_d, Current.family.currency))) %></p>
+  <% end %>
   <p class="text-sm text-secondary px-4"><%= t("pages.dashboard.cashflow_overview.description") %></p>
   <% if sankey_data[:net_savings].to_d.negative? %>
     <p class="text-sm text-warning px-4"><%= t("pages.dashboard.cashflow_overview.deficit_explanation", amount: format_money(Money.new(-sankey_data[:net_savings].to_d, Current.family.currency))) %></p>

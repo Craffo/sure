@@ -2,17 +2,19 @@ en:
   pages:
     dashboard:
       cashflow_overview:
-        income: Income
+        income: Cash inflows
         spending: Spending
         difference: Difference
+        financing: Financing received
+        financing_included: "Inflows include %{amount} in financing received. The outstanding debt remains a liability."
         other_income: Other income
         other_expense: Other spending
-        description: "Main categories only. Smaller amounts are grouped; all categories remain available below. Refunds are netted within each category."
-        deficit_explanation: "Spending exceeds recorded income by %{amount} for the selected period. The difference is shown separately; it is not additional income."
+        description: "Main categories, with details below. Inflows include financing received; own-account transfers are excluded. Refunds are netted within each category."
+        deficit_explanation: "Spending exceeds recorded inflows by %{amount} during this period. The opening balance can fund this difference; it does not imply missing money."
         details: All categories and subcategories
         category: Category
         amount: Amount
         node_labels:
           cash_flow: Total allocated
-          deficit: Spending above income
-          surplus: Unspent income
+          deficit: Spending above inflows
+          surplus: Cash surplus

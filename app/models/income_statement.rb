@@ -49,6 +49,18 @@ class IncomeStatement
     @income_totals_by_period[key] = build_period_total(classification: "income", period: period)
   end
 
+  # Kept separate from budget totals: borrowing supplies cash, not earned income.
+  # Reuse the reporting query so currency conversion and account visibility agree.
+  def financing_inflows(period: Period.current_month)
+    rows = Totals.new(family,
+      transactions_scope: family.transactions.visible.excluding_pending.loan_disbursement.in_period(period),
+      date_range: period.date_range,
+      include_trades: false,
+      included_account_ids: included_account_ids,
+      include_financing: true).call
+    rows.select { |row| row.classification == "income" }.sum { |row| row.total.to_d }
+  end
+
   def net_category_totals(period: Period.current_month)
     key = period_cache_key(period)
     @net_category_totals_by_period ||= {}

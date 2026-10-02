@@ -320,6 +320,11 @@ module Family::AutoTransferMatchable
               (#{linked_account_sql("inflow_accounts")} AND #{linked_account_sql("outflow_accounts")})
             )
         ) transfer_match_candidates
+        WHERE NOT EXISTS (
+          SELECT 1 FROM transactions financing
+          WHERE financing.id = transfer_match_candidates.inflow_transaction_id
+            AND financing.kind = 'loan_disbursement'
+        )
         ORDER BY transfer_match_candidates.match_rank ASC, transfer_match_candidates.date_diff ASC
       SQL
     end

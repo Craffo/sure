@@ -319,16 +319,24 @@
                   data: { controller: "auto-submit-form" } do |f| %>
               <%= hidden_field_tag :grouped, "true" if params[:grouped] == "true" %>
               <%= f.fields_for :entryable do |ef| %>
-                <div class="flex cursor-pointer items-center gap-4 justify-between">
-                  <div class="text-sm space-y-1">
-                    <h4 class="text-primary"><%= t(".one_time_title", type: @entry.amount.negative? ? t("transactions.form.income") : t("transactions.form.expense")) %></h4>
-                    <p class="text-secondary"><%= t(".one_time_description") %></p>
+                <% if @entry.transaction.financing_classifiable? %>
+                  <%= ef.select :kind,
+                        %w[standard loan_disbursement funds_movement one_time].map { |kind| [t("transactions.financing.kinds.#{kind}"), kind] },
+                        { label: t("transactions.financing.label") },
+                        { data: { auto_submit_form_target: "auto" } } %>
+                  <p class="text-sm text-secondary mt-2"><%= t("transactions.financing.description") %></p>
+                <% else %>
+                  <div class="flex cursor-pointer items-center gap-4 justify-between">
+                    <div class="text-sm space-y-1">
+                      <h4 class="text-primary"><%= t(".one_time_title", type: @entry.amount.negative? ? t("transactions.form.income") : t("transactions.form.expense")) %></h4>
+                      <p class="text-secondary"><%= t(".one_time_description") %></p>
+                    </div>
+                    <%= ef.toggle :kind, {
+                          checked: @entry.transaction.one_time?,
+                          data: { auto_submit_form_target: "auto" }
+                        }, "one_time", "standard" %>
                   </div>
-                  <%= ef.toggle :kind, {
-                        checked: @entry.transaction.one_time?,
-                        data: { auto_submit_form_target: "auto" }
-                      }, "one_time", "standard" %>
-                </div>
+                <% end %>
               <% end %>
             <% end %>
           </div>

@@ -33,6 +33,7 @@ class Entry < ApplicationRecord
 
   validate :cannot_unexclude_split_parent
   validate :split_child_date_matches_parent
+  validate :financing_must_be_an_inflow
 
   before_destroy :prevent_individual_child_deletion, if: :split_child?
 
@@ -570,6 +571,13 @@ class Entry < ApplicationRecord
   end
 
   private
+
+    def financing_must_be_an_inflow
+      return unless transaction? && transaction.loan_disbursement?
+      return if amount&.negative? && account&.depository? && transaction.transfer.nil?
+
+      errors.add(:base, :invalid_financing_inflow)
+    end
 
     def cannot_unexclude_split_parent
       return unless excluded_changed?(from: true, to: false) && split_parent?

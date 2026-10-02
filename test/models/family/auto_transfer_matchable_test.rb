@@ -19,6 +19,15 @@ class Family::AutoTransferMatchableTest < ActiveSupport::TestCase
     end
   end
 
+  test "financing received is not matched to an unrelated equal payment" do
+    outflow = create_transaction(account: @credit_card, amount: 15000)
+    inflow = create_transaction(account: @depository, amount: -15000, kind: "loan_disbursement")
+    assert_empty @family.transfer_match_candidates(inflow_transaction_id: inflow.entryable_id)
+    @family.auto_match_transfers!
+    assert inflow.reload.transaction.loan_disbursement?
+    assert_nil outflow.reload.transaction.transfer
+  end
+
   test "concurrent unique-index race does not abort the surrounding transaction" do
     outflow_entry = create_transaction(date: 1.day.ago.to_date, account: @depository, amount: 500)
     inflow_entry = create_transaction(date: Date.current, account: @credit_card, amount: -500)

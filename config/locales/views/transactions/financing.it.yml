@@ -1,0 +1,17 @@
+it:
+  transactions:
+    financing:
+      label: Tipo di entrata
+      description: I finanziamenti ricevuti contano nel flusso di cassa, ma non come reddito nel budget.
+      kinds:
+        standard: Entrata ordinaria
+        loan_disbursement: Finanziamento ricevuto
+        funds_movement: Giroconto
+        one_time: Entrata una tantum (esclusa dai rapporti)
+  activerecord:
+    errors:
+      models:
+        entry:
+          attributes:
+            base:
+              invalid_financing_inflow: Un finanziamento ricevuto deve essere un'entrata su un conto bancario o contanti, senza un giroconto abbinato.

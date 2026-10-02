@@ -72,6 +72,7 @@ class Transaction < ApplicationRecord
     funds_movement: "funds_movement", # Movement of funds between accounts, excluded from budget analytics
     cc_payment: "cc_payment", # A CC payment, excluded from budget analytics (CC payments offset the sum of expense transactions)
     loan_payment: "loan_payment", # A payment to a Loan account, treated as an expense in budgets
+    loan_disbursement: "loan_disbursement", # Borrowed cash received, included in cash flow but not earned income
     one_time: "one_time", # A one-time expense/income, excluded from budget analytics
     investment_contribution: "investment_contribution" # Transfer to investment/crypto account, treated as an expense in budgets
   }
@@ -83,13 +84,14 @@ class Transaction < ApplicationRecord
   # Kinds excluded from budget/income-statement analytics.
   # loan_payment and investment_contribution are intentionally NOT here —
   # they represent real cash outflow from a budgeting perspective.
-  BUDGET_EXCLUDED_KINDS = %w[funds_movement one_time cc_payment].freeze
+  BUDGET_EXCLUDED_KINDS = %w[funds_movement one_time cc_payment loan_disbursement].freeze
 
   # Kinds that never belong in the "Uncategorized" bucket, whichever surface
   # asks for it (the Transactions category filter, the uncategorized badge
   # count, the Quick Categorize wizard). These are the paired legs of a
   # Transfer between the user's own accounts, so they have nothing to
-  # categorize. Every other kind with a NULL category does.
+  # categorize. Financing has its own cash-flow group without a category.
+  # Every other kind with a NULL category does.
   #
   # This is deliberately neither of the two lists above:
   #   - vs TRANSFER_KINDS: loan_payment and investment_contribution are
@@ -100,7 +102,13 @@ class Transaction < ApplicationRecord
   #     expense/income that is only excluded from budget *analytics* so it
   #     doesn't skew medians. "Has no category" and "counts toward the
   #     budget" are different questions; only the former belongs here.
-  UNCATEGORIZED_EXCLUDED_KINDS = %w[funds_movement cc_payment].freeze
+  UNCATEGORIZED_EXCLUDED_KINDS = %w[funds_movement cc_payment loan_disbursement].freeze
+
+  # Only unpaired bank/cash inflows can be reclassified as borrowed cash.
+  def financing_classifiable?
+    entry&.amount&.negative? && entry.account.depository? && transfer.nil? &&
+      %w[standard one_time funds_movement loan_disbursement].include?(kind)
+  end
 
   # All valid investment activity labels (for UI dropdown)
   ACTIVITY_LABELS = [

@@ -319,6 +319,26 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_enqueued_with(job: SyncJob)
   end
 
+  test "classifies a financing inflow without creating another transaction" do
+    @entry.update!(amount: -15000)
+    assert_no_difference [ "Entry.count", "Transaction.count" ] do
+      patch transaction_url(@entry), params: { entry: { entryable_attributes: { id: @entry.entryable_id, kind: "loan_disbursement" } } }
+    end
+    assert_redirected_to account_url(@entry.account)
+    assert @entry.reload.transaction.loan_disbursement?
+    assert_equal(-15000, @entry.amount)
+    get transaction_url(@entry)
+    assert_response :success
+    assert_select "select[name='entry[entryable_attributes][kind]'] option[value='loan_disbursement'][selected]"
+  end
+
+  test "rejects classifying an expense as financing received" do
+    @entry.update!(amount: 100)
+    patch transaction_url(@entry), params: { entry: { entryable_attributes: { id: @entry.entryable_id, kind: "loan_disbursement" } } }
+    assert_response :unprocessable_entity
+    assert_not @entry.reload.transaction.loan_disbursement?
+  end
+
   test "re-renders show with mark-recurring state when update fails validation" do
     family = families(:empty)
     sign_in users(:empty)

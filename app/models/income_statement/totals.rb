@@ -1,12 +1,13 @@
 class IncomeStatement::Totals
   include IncomeStatement::ScopedTransactionsQuery
 
-  def initialize(family, transactions_scope:, date_range:, include_trades: true, included_account_ids: nil)
+  def initialize(family, transactions_scope:, date_range:, include_trades: true, included_account_ids: nil, include_financing: false)
     @family = family
     @transactions_scope = transactions_scope
     @date_range = date_range
     @include_trades = include_trades
     @included_account_ids = included_account_ids
+    @include_financing = include_financing
 
     validate_date_range!
   end
@@ -28,6 +29,12 @@ class IncomeStatement::Totals
   end
 
   private
+    def budget_excluded_kinds_sql
+      return super unless @include_financing
+
+      (Transaction::BUDGET_EXCLUDED_KINDS - [ "loan_disbursement" ]).map { |kind| "'#{kind}'" }.join(", ")
+    end
+
     TotalsRow = Data.define(:parent_category_id, :category_id, :classification, :total, :transactions_count, :is_uncategorized_investment)
 
     def query_sql

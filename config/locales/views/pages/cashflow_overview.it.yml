@@ -5,14 +5,16 @@ it:
         income: Entrate
         spending: Uscite
         difference: Differenza
+        financing: Finanziamenti ricevuti
+        financing_included: "Nelle entrate sono inclusi %{amount} di finanziamenti ricevuti. Il debito residuo resta tra le passività."
         other_income: Altre entrate
         other_expense: Altre spese
-        description: "Solo categorie principali. Le voci minori sono raggruppate; trovi tutte le categorie qui sotto. I rimborsi sono sottratti nella rispettiva categoria."
-        deficit_explanation: "Nel periodo selezionato le uscite superano le entrate registrate di %{amount}. La differenza è mostrata separatamente e non è un'entrata aggiuntiva."
+        description: "Categorie principali, con dettaglio qui sotto. Le entrate includono i finanziamenti ricevuti; i giroconti sono esclusi. I rimborsi sono sottratti nella rispettiva categoria."
+        deficit_explanation: "Nel periodo le uscite superano le entrate registrate di %{amount}. Possono essere coperte dal saldo già disponibile prima del periodo: questa differenza non indica denaro mancante."
         details: Tutte le categorie e sottocategorie
         category: Categoria
         amount: Importo
         node_labels:
           cash_flow: Totale distribuito
           deficit: Spese oltre le entrate
-          surplus: Entrate non spese
+          surplus: Eccedenza di cassa

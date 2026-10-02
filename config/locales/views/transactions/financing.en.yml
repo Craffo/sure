@@ -1,0 +1,17 @@
+en:
+  transactions:
+    financing:
+      label: Type of inflow
+      description: Financing received counts in cash flow, but not as earned income in your budget.
+      kinds:
+        standard: Regular income
+        loan_disbursement: Financing received
+        funds_movement: Own-account transfer
+        one_time: One-time income (excluded from reports)
+  activerecord:
+    errors:
+      models:
+        entry:
+          attributes:
+            base:
+              invalid_financing_inflow: Financing received must be an incoming bank or cash transaction without a paired transfer.

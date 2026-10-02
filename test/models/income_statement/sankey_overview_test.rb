@@ -59,6 +59,20 @@ class IncomeStatement::SankeyOverviewTest < ActiveSupport::TestCase
     assert_empty overview[:details]
   end
 
+  test "small financing stays explicit when larger income categories are grouped" do
+    5.times do |index|
+      category = @family.categories.create!(name: "Income #{index}")
+      create_transaction(account: @account, date: @date, amount: -100, category: category)
+    end
+    create_transaction(account: @account, date: @date, amount: -1, kind: "loan_disbursement")
+    graph = overview
+    assert_equal "501.0", graph[:income]
+    assert_equal "1.0", graph[:nodes].find { |node| node[:financing] }[:value]
+    assert_equal 4, graph[:nodes].count { |node| node[:kind] == "income" }
+    assert_equal 6, graph[:details].size
+    assert_balanced(graph)
+  end
+
   private
     def detailed_graph
       IncomeStatement::Sankey.new(IncomeStatement.new(@family), period: Period.custom(start_date: @date, end_date: @date.end_of_month)).as_json

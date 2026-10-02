@@ -9,11 +9,17 @@ class IncomeStatement::Sankey
   def as_json(*)
     @nodes, @links = [], []
     groups = category_groups
-    income = groups.sum { |group| side_total(group, :income) }.to_d
+    financing = @statement.financing_inflows(period: @period).to_d
+    income = groups.sum { |group| side_total(group, :income) }.to_d + financing
     spending = groups.sum { |group| side_total(group, :expense) }.to_d
     capacity = [ income, spending ].max
     unless capacity.zero?
       center = add_node("cash_flow_node", "Cash Flow", :cash_flow, capacity, 100)
+      if financing.positive?
+        index = add_node("financing_inflow", I18n.t("pages.dashboard.cashflow_overview.financing"), :income, financing, percentage(financing, income))
+        @nodes[index][:financing] = true
+        add_link(index, center, financing, percentage(financing, income))
+      end
       groups.each do |group|
         add_group(group, :income, income, center)
         add_group(group, :expense, spending, center)
@@ -26,7 +32,7 @@ class IncomeStatement::Sankey
         add_link(source, target, net.abs, percentage(net.abs, capacity))
       end
     end
-    { basis: "net_by_category", income: decimal(income), spending: decimal(spending),
+    { basis: "net_by_category", income: decimal(income), financing_income: decimal(financing), spending: decimal(spending),
       net_savings: decimal(income - spending), nodes: @nodes, links: @links }
   end
 

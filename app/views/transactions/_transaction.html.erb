@@ -92,6 +92,10 @@
                       </span>
                     <% end %>
 
+                    <% if transaction.loan_disbursement? %>
+                      <%= render DS::Pill.new(label: t("transactions.financing.kinds.loan_disbursement"), tone: :info, marker: false, icon: "banknote") %>
+                    <% end %>
+
                     <%# Pending indicator %>
                     <% if transaction.pending? %>
                       <%= render DS::Pill.new(

@@ -95,6 +95,42 @@ class IncomeStatement::SankeyTest < ActiveSupport::TestCase
     assert_equal graph, graph
   end
 
+  test "borrowing funds cash flow once without becoming budget income and repayments remain outflows" do
+    transaction(-2000, @parent)
+    create_transaction(account: @account, date: @month, amount: -15000, kind: "loan_disbursement", category: @parent)
+    create_transaction(account: @account, date: @month, amount: 667.99, kind: "loan_payment", category: @child)
+    create_transaction(account: @account, date: @month, amount: -500, kind: "funds_movement")
+    create_transaction(account: @account, date: @month, amount: 500, kind: "funds_movement")
+    result = graph
+    assert_equal "17000.0", result[:income]
+    assert_equal "15000.0", result[:financing_income]
+    assert_equal "667.99", result[:spending]
+    assert_equal "16332.01", result[:net_savings]
+    assert_equal "15000.0", node(result, "financing_inflow")[:value]
+    budget = IncomeStatement.new(@family).totals(date_range: @month..@month.end_of_month)
+    assert_equal 2000, budget.income_money.amount
+    assert_equal 667.99.to_d, budget.expense_money.amount
+    assert_balanced(result)
+  end
+
+  test "financing respects dates, pending status, exclusion, family, account selection and exchange rates" do
+    eur = @family.accounts.create!(name: "EUR", currency: "EUR", balance: 0, accountable: Depository.new)
+    ExchangeRate.create!(from_currency: "EUR", to_currency: "USD", date: @month, rate: "1.2345")
+    create_transaction(account: eur, currency: "EUR", date: @month, amount: -100, kind: "loan_disbursement")
+    create_transaction(account: @account, date: @month, amount: -700, kind: "loan_disbursement", excluded: true)
+    create_transaction(account: @account, date: @month - 1.day, amount: -800, kind: "loan_disbursement")
+    pending = create_transaction(account: @account, date: @month, amount: -900, kind: "loan_disbursement")
+    pending.entryable.update!(extra: { "enable_banking" => { "pending" => true } })
+    create_transaction(account: accounts(:depository), date: @month, amount: -1000, kind: "loan_disbursement")
+    assert_equal "123.45", graph[:income]
+    assert_balanced(graph)
+    period = Period.custom(start_date: @month, end_date: @month.end_of_month)
+    assert_equal 0, IncomeStatement.new(@family, accounts: [ @account ]).financing_inflows(period: period)
+    assert_equal 0, IncomeStatement.new(@family, accounts: []).financing_inflows(period: period)
+    eur.update!(exclude_from_reports: true)
+    assert_equal "0.0", graph[:income]
+  end
+
   private
     def transaction(amount, category)
       create_transaction(account: @account, amount: amount, category: category, date: @month)
